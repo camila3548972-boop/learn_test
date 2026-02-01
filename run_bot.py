@@ -1,6 +1,5 @@
 import logging
 import asyncio
-import threading
 from flask import Flask, render_template, jsonify
 from telegram import Update
 from telegram.ext import Application, CallbackQueryHandler
@@ -29,6 +28,7 @@ logging.basicConfig(
 )
 
 # --- Flask App ---
+# This 'app' object is what Gunicorn will serve for the 'web' process.
 app = Flask(__name__, template_folder="templates")
 
 @app.route('/')
@@ -50,10 +50,6 @@ def api_posts():
         }
         formatted_posts.append(post_data)
     return jsonify(formatted_posts)
-
-def run_flask():
-    """Runs the Flask app in a separate thread."""
-    app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
 
 # --- Telegram Bot ---
 def main() -> None:
@@ -77,16 +73,13 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(instruct_invite, pattern="^admin_instruct_invite$"))
 
     logging.info("Starting bot polling...")
-    # run_polling() is a blocking call that runs the bot until CTRL+C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
-    # Start Flask app in a background daemon thread
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
-    logging.info("Flask server started in a background thread.")
-
-    # Run the bot's main function in the main thread
+    # This block is executed when the script is run directly (by the 'worker' process).
+    # It will ONLY start the Telegram bot.
+    # The 'web' process (Gunicorn) will import this file to get the 'app' object,
+    # but it will not execute this block.
+    logging.info("Starting Telegram bot worker...")
     main()
