@@ -1,2 +1,2 @@
-web: gunicorn "bot_worker:create_app()"
+web: gunicorn wsgi:app
 worker: python -m run_bot
