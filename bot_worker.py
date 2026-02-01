@@ -13,9 +13,13 @@ def create_app():
     print(f"DEBUG: Attempting to use database URL: {database_url}")
     
     if database_url:
-        # SQLAlchemy prefers 'postgresql://' over 'postgres://'
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        # Explicitly tell SQLAlchemy to use the 'psycopg' driver (v3)
+        # This handles both 'postgres://' and 'postgresql://' from the environment
+        if database_url.startswith("postgresql://"):
+            database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        elif database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+            
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     else:
         # This will help confirm if the environment variable is missing
