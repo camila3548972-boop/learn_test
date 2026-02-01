@@ -1,3 +1,7 @@
-#!/bin/sh
+#!/bin/bash
+
+# Activate the virtual environment
 source .venv/bin/activate
-python -u -m flask --app main run -p $PORT --debug
+
+# Run the main application file
+python run_bot.py
