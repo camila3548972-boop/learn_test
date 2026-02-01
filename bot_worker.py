@@ -5,32 +5,37 @@ from database import db
 
 def create_app():
     app = Flask(__name__)
-    # Railpack requires the secret to be named DATABASE
-    database_url = os.environ.get('DATABASE')
+    
+    # Check for DATABASE (Railpack convention) or DATABASE_URL (standard convention)
+    database_url = os.environ.get('DATABASE') or os.environ.get('DATABASE_URL')
+    
+    # Add a print statement for clear debugging in Railway logs
+    print(f"DEBUG: Attempting to use database URL: {database_url}")
     
     if database_url:
-        # Railway provides a 'postgres://' URL, but SQLAlchemy prefers 'postgresql://'
+        # SQLAlchemy prefers 'postgresql://' over 'postgres://'
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-        
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    else:
+        # This will help confirm if the environment variable is missing
+        print("ERROR: DATABASE or DATABASE_URL environment variable not found.")
 
-    # Initialize the database with the app
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
-    # Add a simple root route to check if the app is running
     @app.route('/')
     def index():
         return "Web server is running!"
 
     return app
 
-# This part is for the Telegram bot worker
 def run_bot():
     TOKEN = os.environ.get("TOKEN")
     if TOKEN:
         application = Application.builder().token(TOKEN).build()
-        # You would add your handlers (commands, messages, etc.) here
-        # For now, we'll just log that the bot is running
-        print("Bot is running...")
+        print("Bot worker is running...")
+        # Add your bot handlers here
+        application.run_polling()
+    else:
+        print("ERROR: TOKEN environment variable not found. Bot cannot start.")
