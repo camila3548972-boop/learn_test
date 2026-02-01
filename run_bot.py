@@ -1,7 +1,15 @@
 from flask import Flask, render_template, jsonify
-from data_store import published_posts
+from database import db
+from models import Post
+import os
+from dotenv import load_dotenv
 
-app = Flask(__name__, template_folder="templates")
+load_dotenv()
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
 
 @app.route('/')
 def index():
@@ -11,18 +19,15 @@ def index():
 @app.route('/api/posts')
 def api_posts():
     """API endpoint to get posts from the shared data store."""
+    posts = Post.query.order_by(Post.created_at.desc()).all()
     formatted_posts = []
-    for post_msg in published_posts:
-        post_data = {
-            "id": post_msg.message_id,
-            "text": post_msg.text or post_msg.caption,
-            "date": post_msg.date.isoformat(),
-            "photo": post_msg.photo[-1].file_id if post_msg.photo else None,
-            "video": post_msg.video.file_id if post_msg.video else None,
-        }
-        formatted_posts.append(post_data)
+    for post in posts:
+        formatted_posts.append({
+            'id': post.id,
+            'message_id': post.message_id,
+            'text': post.text,
+            'photo_id': post.photo_id,
+            'video_id': post.video_id,
+            'created_at': post.created_at.isoformat()
+        })
     return jsonify(formatted_posts)
-
-# This part is no longer needed here as gunicorn will run the app
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', port=8080)
