@@ -4,7 +4,7 @@ from database import db
 from sqlalchemy.exc import OperationalError
 
 # IMPORTANT: Import all your models here so that SQLAlchemy knows about them
-from models import Admin, AppConfig, Channel, User, UserChannel
+from models import Post
 
 app = create_app()
 
