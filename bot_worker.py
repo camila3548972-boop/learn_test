@@ -2,28 +2,31 @@ from flask import Flask
 from telegram.ext import Application
 import os
 from database import db
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def create_app():
-    """Application Factory: Creates and configures the Flask app."""
     app = Flask(__name__)
-    
     database_url = os.environ.get('DATABASE_URL')
-    if not database_url:
-        raise RuntimeError("DATABASE_URL is not set. Please add it to your environment variables.")
-
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # Initialize SQLAlchemy with the app instance
+    if database_url:
+        # Railway uses 'postgres://', but SQLAlchemy prefers 'postgresql://'
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Initialize the database with the app
     db.init_app(app)
+
+    # Add a simple root route to check if the app is running
+    @app.route('/')
+    def index():
+        return "Web server is running!"
 
     return app
 
-# This part is for the Telegram bot worker, not the web server.
-if __name__ != '__main__':
+# This part is for the Telegram bot worker
+def run_bot():
     TOKEN = os.environ.get("TOKEN")
     if TOKEN:
         application = Application.builder().token(TOKEN).build()
@@ -41,5 +44,12 @@ if __name__ != '__main__':
         application.add_handler(dm_handler)
         application.add_handler(edit_post_handler)
         application.add_handler(cancel_handler)
+
+        print("Bot worker started polling...")
+        application.run_polling()
     else:
         print("TOKEN environment variable not found, bot worker not started.")
+
+# This block will only run when the script is executed directly (for the worker)
+if __name__ == '__main__':
+    run_bot()
