@@ -7,7 +7,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+
+# Ensure DATABASE_URL is set
+database_url = os.environ.get('DATABASE_URL')
+if not database_url:
+    raise RuntimeError("DATABASE_URL is not set. Please add it to your environment variables.")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -18,7 +24,7 @@ def index():
 
 @app.route('/api/posts')
 def api_posts():
-    """API endpoint to get posts from the shared data store."""
+    """API endpoint to get posts from the database."""
     posts = Post.query.order_by(Post.created_at.desc()).all()
     formatted_posts = []
     for post in posts:
