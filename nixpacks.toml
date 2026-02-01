@@ -1,5 +1,6 @@
-[phases.setup]
-aptPkgs = ["libpq-dev", "gcc"]
+# Instruct Railway's build system (Nixpacks) to install system-level packages.
 
-[variables]
-NIXPACKS_PYTHON_VERSION = "3.11"
+[phases.setup]
+# Add the PostgreSQL client libraries (which includes libpq.so.5) to the environment.
+# This is required by the psycopg2-binary Python package at runtime.
+nixPkgs = ["postgresql"]
