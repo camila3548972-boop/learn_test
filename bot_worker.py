@@ -1,21 +1,33 @@
 from flask import Flask
 from telegram.ext import Application
 import os
+from database import db
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def create_app():
+    """Application Factory: Creates and configures the Flask app."""
     app = Flask(__name__)
-    # Your Flask app configurations can go here
+    
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        raise RuntimeError("DATABASE_URL is not set. Please add it to your environment variables.")
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    # Initialize SQLAlchemy with the app instance
+    db.init_app(app)
+
     return app
 
 # This part is for the Telegram bot worker, not the web server.
-# It should not be run when the web server starts.
 if __name__ != '__main__':
-    # Assume TOKEN is set in the environment for the worker
     TOKEN = os.environ.get("TOKEN")
     if TOKEN:
         application = Application.builder().token(TOKEN).build()
 
-        # Import handlers here, inside the condition
         from handlers.start import start_handler
         from handlers.new_post import new_post_handler
         from handlers.admin_panel_handler import admin_panel_handler
@@ -29,9 +41,5 @@ if __name__ != '__main__':
         application.add_handler(dm_handler)
         application.add_handler(edit_post_handler)
         application.add_handler(cancel_handler)
-
-        # Note: The following line is blocking and should be in its own script for the worker
-        # application.run_polling()
     else:
-        # This will be printed when the web server starts, which is expected
         print("TOKEN environment variable not found, bot worker not started.")
