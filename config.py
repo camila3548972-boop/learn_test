@@ -5,10 +5,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Required Environment Variables ---
-# Use 'TOKEN' to match Railway environment variables
-# Added a dummy default value to pass the build process.
-# The app will still use the real TOKEN from the Railway dashboard at runtime.
-TOKEN = os.getenv("TOKEN", "dummy-token-for-build-test") 
+# Use 'TOKEN' to match Railway environment variables. 
+# This will read the variable directly from the Railway dashboard.
+TOKEN = os.getenv("TOKEN") 
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 
 # --- Optional Environment Variables ---
