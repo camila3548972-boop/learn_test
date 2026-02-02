@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Required Environment Variables ---
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+# Use 'TOKEN' to match Railway environment variables
+TOKEN = os.getenv("TOKEN") 
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 
 # --- Optional Environment Variables ---
